@@ -42,9 +42,7 @@ export function createRBAC<
       .filter((opt) => roles.includes(opt.role))
       .map((opt) => opt.inherit)
 
-    return [...roles, ...inheritRoles.flat()].filter(
-      (v, i, a) => a.indexOf(v) === i
-    ) as TRole[]
+    return [...new Set([...roles, ...inheritRoles.flat()])] as TRole[]
   }
 
   function getRoleAccess(): readonly RoleAccess<TRole, TResource, TAction>[] {

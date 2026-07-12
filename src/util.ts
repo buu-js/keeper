@@ -33,7 +33,7 @@ export function flatten(
     for (const [on, canActions] of resourceMap.entries()) {
       result.push({
         can: canActions,
-        inherit: [...current.inherit],
+        inherit: allInheritedRoles,
         on: on,
         role: current.role
       })
