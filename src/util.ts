@@ -9,23 +9,6 @@ export function flatten(
     roleListAccess.map((r) => [r.role, r])
   )
 
-  function resolveInherit(roleName: string, visited = new Set<string>()): string[] {
-    if (visited.has(roleName)) return []
-    visited.add(roleName)
-
-    const current = rawRolesMap.get(roleName)
-    if (!current) return []
-
-    return current.inherit
-      .reduce((acc, nextRole) => {
-        return acc.concat(nextRole, resolveInherit(nextRole, visited))
-      }, [] as string[])
-      .filter((v: string, i: number, a: readonly string[]) => a.indexOf(v) === i)
-  }
-
-  const mergeUniq = (source: readonly string[], target: readonly string[]) =>
-    [...source, ...target].filter((v, i, a) => a.indexOf(v) === i)
-
   for (const current of roleListAccess) {
     const allInheritedRoles = resolveInherit(current.role)
 
@@ -41,7 +24,9 @@ export function flatten(
 
       for (const access of inheritRoleData.access) {
         const existingActions = resourceMap.get(access.on) || []
-        resourceMap.set(access.on, mergeUniq(existingActions, access.can || []))
+        resourceMap.set(access.on, [
+          ...new Set([...existingActions, ...(access.can || [])])
+        ])
       }
     }
 
@@ -56,6 +41,23 @@ export function flatten(
   }
 
   return result
+
+  function resolveInherit(roleName: string, visited = new Set<string>()): string[] {
+    if (visited.has(roleName)) return []
+    visited.add(roleName)
+
+    const current = rawRolesMap.get(roleName)
+    if (!current) return []
+
+    const result: string[] = []
+
+    for (const role of current.inherit) {
+      result.push(role)
+      result.push(...resolveInherit(role, visited))
+    }
+
+    return [...new Set(result)]
+  }
 }
 
 export interface IndexedRBAC {
